@@ -17,6 +17,9 @@ USERS_CSV = "data/users.csv"
 EVENTS_CSV = "data/events.csv"
 ARTICLES_JSON = "data/articles.json"
 
+# "123456"
+USER_PASSWORD = "$2b$12$KnWOu/UPlzpcU6vxfElpg.wwsg3krvXFBLeloxUdKu7F0rk0UbFLW"
+
 os.makedirs("data", exist_ok=True)
 
 print("Generating users...")
@@ -27,8 +30,9 @@ for _ in range(NUM_USERS):
         "id": fake.uuid4(),
         "email": fake.unique.email(),
         "username": fake.user_name(),
+        "password_hash": USER_PASSWORD,
         "inserted_at": fake.date_time_between(start_date="-2y", end_date="-1y"),
-        "updated_at": fake.date_time_between(start_date="-1y", end_date="now")
+        "updated_at": fake.date_time_between(start_date="-1y", end_date="now"),
     }
     users.append(user)
 
