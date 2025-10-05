@@ -62,7 +62,9 @@ articles = []
 for _ in range(NUM_ARTICLES):
     author = random.choice(users)
     comment = {
-        "_id": str(ObjectId()),
+        "_id": {
+            "$oid": str(ObjectId())
+        },
         "title": fake.sentence(nb_words=6),
         "author": {
             "id": author["id"],
@@ -93,7 +95,9 @@ for _ in range(NUM_COMMENTS):
     article["commentsCount"] += 1
 
     comment = {
-        "_id": str(ObjectId()),
+        "_id": {
+            "$oid": str(ObjectId())
+        },
         "postId": article["_id"],
         "author": {
             "id": author["id"],
@@ -176,7 +180,7 @@ for _ in range(NUM_EVENTS):
     event = {
         "id": _ + 1,
         "user_id": user["id"],
-        "post_id": comment["_id"],
+        "post_id": comment["_id"]["$oid"],
         "kind": random.choice(event_kinds),
         "timestamp": (datetime.now() - timedelta(days=random.randint(0, 365))).strftime("%Y-%m-%d %H:%M:%S"),
         "device_id": device_id
