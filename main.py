@@ -11,12 +11,14 @@ fake = Faker()
 fake.unique.clear()
 
 NUM_USERS = 20_000
-NUM_ARTICLES = 20_000
+NUM_ARTICLES = 5_000
+NUM_COMMENTS = 20_000
 NUM_EVENTS = 20_000
 
 USERS_CSV = "data/users.csv"
 EVENTS_CSV = "data/events.csv"
 ARTICLES_JSON = "data/articles.json"
+COMMENTS_JSON = "data/comments.json"
 DEVICES_CSV = "data/devices.csv"
 
 # "123456"
@@ -24,6 +26,10 @@ USER_PASSWORD = "$2b$12$KnWOu/UPlzpcU6vxfElpg.wwsg3krvXFBLeloxUdKu7F0rk0UbFLW"
 
 os.makedirs("data", exist_ok=True)
 
+
+# =============================================================================
+# Users
+# =============================================================================
 print("Generating users...")
 
 users = []
@@ -45,38 +51,82 @@ with open(USERS_CSV, mode="w", newline="", encoding="utf-8") as f:
 
 print(f"Wrote {len(users)} users to {USERS_CSV}")
 
+
+# =============================================================================
+# Articles
+# =============================================================================
 print("Generating articles...")
 
 articles = []
 
 for _ in range(NUM_ARTICLES):
     author = random.choice(users)
-    article = {
+    comment = {
         "_id": str(ObjectId()),
         "title": fake.sentence(nb_words=6),
-        "author_id": author["id"],
+        "author": {
+            "id": author["id"],
+            "username": author["username"],
+            "email": author["email"],
+        },
         "tags": [fake.word() for _ in range(random.randint(1, 5))],
         "content": fake.paragraph(nb_sentences=5),
-        "commentsCount": random.randint(0, 50),
+        "commentsCount": 0,
         "createdAt": fake.date_time_between(start_date="-2y", end_date="-1y").isoformat(),
         "updatedAt": fake.date_time_between(start_date="-1y", end_date="now").isoformat()
     }
-    articles.append(article)
+    articles.append(comment)
+
+
+
+# =============================================================================
+# Comments
+# =============================================================================
+print("Generating comments...")
+
+comments = []
+
+for _ in range(NUM_COMMENTS):
+    article = random.choice(articles)
+    author = random.choice(users)
+
+    article["commentsCount"] += 1
+
+    comment = {
+        "_id": str(ObjectId()),
+        "postId": article["_id"],
+        "author": {
+            "id": author["id"],
+            "username": author["username"],
+            "email": author["email"],
+        },
+        "content": fake.paragraph(nb_sentences=1),
+        "createdAt": fake.date_time_between(start_date="-2y", end_date="-1y").isoformat(),
+        "updatedAt": fake.date_time_between(start_date="-1y", end_date="now").isoformat()
+    }
+    comments.append(comment)
 
 with open(ARTICLES_JSON, "w", encoding="utf-8") as f:
     json.dump(articles, f, indent=2, ensure_ascii=False)
 
 print(f"Wrote {len(articles)} articles to {ARTICLES_JSON}")
 
+with open(COMMENTS_JSON, "w", encoding="utf-8") as f:
+    json.dump(comments, f, indent=2, ensure_ascii=False)
+
+print(f"Wrote {len(comments)} comments to {COMMENTS_JSON}")
+
+
+# =============================================================================
+# Devices
+# =============================================================================
 print("Generating devices...")
 
-# Define some realistic values
 oses = ["Windows", "macOS", "Linux", "Android", "iOS"]
 browsers = ["Chrome", "Firefox", "Safari", "Edge", "Opera"]
 resolutions = ["1920x1080", "1366x768", "1440x900", "2560x1440", "1280x720"]
 languages = ["en", "es", "fr", "de", "zh"]
 
-# Create all unique combinations
 all_device_combinations = list(product(oses, browsers, resolutions, languages))
 random.shuffle(all_device_combinations)  # shuffle to pick randomly
 
@@ -101,6 +151,10 @@ with open(DEVICES_CSV, mode="w", newline="", encoding="utf-8") as f:
 
 print(f"Wrote {len(devices)} devices to {DEVICES_CSV}")
 
+
+# =============================================================================
+# Events
+# =============================================================================
 print("Generating events...")
 
 events = []
@@ -108,7 +162,7 @@ event_kinds = ["view", "like", "share"]
 
 for _ in range(NUM_EVENTS):
     user = random.choice(users)
-    article = random.choice(articles)
+    comment = random.choice(articles)
         # Most events have a device
     if random.random() < 0.9:  # 90% chance
         os_ = random.choice(oses)
@@ -122,7 +176,7 @@ for _ in range(NUM_EVENTS):
     event = {
         "id": _ + 1,
         "user_id": user["id"],
-        "post_id": article["_id"],
+        "post_id": comment["_id"],
         "kind": random.choice(event_kinds),
         "timestamp": (datetime.now() - timedelta(days=random.randint(0, 365))).strftime("%Y-%m-%d %H:%M:%S"),
         "device_id": device_id
